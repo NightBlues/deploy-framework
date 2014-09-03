@@ -1,4 +1,4 @@
-deploy-mode
+deploy-framework
 ===========
 
-Emacs minor mode that helps deploy your application onto test stand.
+Emacs lisp framework that helps you deploy your applications onto test stand.

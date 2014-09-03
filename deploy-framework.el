@@ -1,9 +1,9 @@
-;;; deploy-mode.el --- Framework for building and deploying your code
+;;; deploy-framework.el --- Framework for building and deploying your code
 
 ;; Copyright (C) 2014, Vadim Radovel <vradovel@croc.ru>
 
 ;; Author: Vadim Radovel <vradovel@croc.ru>
-;; URL: https://github.com/NightBlues/deploy-mode
+;; URL: https://github.com/NightBlues/deploy-framework
 ;; Version: 0.0.1
 
 ;;; Commentary:
@@ -23,6 +23,7 @@
 ;;   (message "Deploy finished."))
 
 ;;; Code:
+(eval-when-compile (require 'cl))
 
 (cl-defun df-scp-command (&key user host port src dst)
   (format "scp -P %s %s %s@%s:%s" port src user host dst))
@@ -70,11 +71,5 @@
              (df-shell-command (concat ,ssh-prefix (cdr ,c))))
            (df-shell-command (concat ,ssh-prefix ,c))))))
 
-
-(provide 'df-scp-command)
-(provide 'df-rsync-command)
-(provide 'df-make-command)
-(provide 'df-run-local)
-(provide 'df-copy-files)
-(provide 'df-run-remote)
-;;; deploy-mode.el ends here
+(provide 'deploy-framework)
+;;; deploy-framework.el ends here
