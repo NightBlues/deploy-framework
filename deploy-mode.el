@@ -1,3 +1,29 @@
+;;; deploy-mode.el --- Framework for building and deploying your code
+
+;; Copyright (C) 2014, Vadim Radovel <vradovel@croc.ru>
+
+;; Author: Vadim Radovel <vradovel@croc.ru>
+;; URL: https://github.com/NightBlues/deploy-mode
+;; Version: 0.0.1
+
+;;; Commentary:
+;; Provides easy to write rules for building and deploying your project.
+;; Example:
+;; (defun df-deploy-my ()
+;;   (interactive)
+;;   (df-run-local
+;;    (df-make-command "~/devel/" :make-args "no-lint"))
+;;   (df-copy-files 
+;;    "root" "test.com" "37017"
+;;    (cons "~/devel/" "/root/"))
+;;   (df-run-remote
+;;    "root" "test.com" "37017"
+;;    "killall devel.sh"
+;;    "screen -d -m python /root/devel/devel.sh")
+;;   (message "Deploy finished."))
+
+;;; Code:
+
 (cl-defun df-scp-command (&key user host port src dst)
   (format "scp -P %s %s %s@%s:%s" port src user host dst))
 
@@ -44,19 +70,4 @@
              (df-shell-command (concat ,ssh-prefix (cdr ,c))))
            (df-shell-command (concat ,ssh-prefix ,c))))))
 
-;; Example:
-;; (defun df-deploy-my ()
-;;   (interactive)
-;;   (df-run-local
-;;    (df-make-command "~/devel/" :make-args "no-lint"))
-  
-;;   (df-copy-files 
-;;    "root" "test.com" "37017"
-;;    (cons "~/devel/" "/root/"))
-
-;;   (df-run-remote
-;;    "root" "test.com" "37017"
-;;    "killall devel.sh"
-;;    "screen -d -m python /root/devel/devel.sh")
-
-;;   (message "Deploy finished."))
+;;; deploy-mode.el ends here
