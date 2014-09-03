@@ -70,4 +70,11 @@
              (df-shell-command (concat ,ssh-prefix (cdr ,c))))
            (df-shell-command (concat ,ssh-prefix ,c))))))
 
+
+(provide 'df-scp-command)
+(provide 'df-rsync-command)
+(provide 'df-make-command)
+(provide 'df-run-local)
+(provide 'df-copy-files)
+(provide 'df-run-remote)
 ;;; deploy-mode.el ends here
