@@ -25,6 +25,9 @@
 ;;; Code:
 (eval-when-compile (require 'cl))
 
+(defvar df-profiles '())
+
+;; Helpers
 (cl-defun df-scp-command (&key user host port src dst)
   (format "scp -P %s %s %s@%s:%s" port src user host dst))
 
@@ -40,36 +43,58 @@
 (cl-defun get-ssh-prefix (user host port)
   (format "ssh %s@%s -p %s " user host port))
 
-(cl-defmacro df-shell-command (command)
-  `(progn (message (format "Running command: %s in dir %s" ,command default-directory))
-          ;; (shell-command ,command "*Messages*")
-          (call-process-shell-command ,command nil "*Messages*")))
-          ;; (with-temp-buffer
-          ;;   (shell-command-on-region (point-min) (point-max) ,command t)
-          ;;   (append-to-buffer *Messages* (point-min) (point-max)))))
+(defun get-hash-keys (hashtable)
+  "Return all keys in hashtable."
+  (let (allkeys)
+    (maphash (lambda (kk vv) (setq allkeys (cons kk allkeys))) hashtable)
+    allkeys))
 
+;; Profile generators
 (cl-defmacro df-copy-files (user host port &body files)
-  "Generates code that deploys files"
-  (let ((f (gensym)))
-    `(dolist (,f (list ,@files))
-         (df-shell-command (df-rsync-command :user ,user :host ,host :port ,port :src (car ,f) :dst (cdr ,f))))))
+  "Generate code that runs commands local"
+  `(list ,@(let ((res nil))
+             (dolist (f files (reverse res))
+               (setq res
+                     (cons
+                      (df-rsync-command :user user :host host :port port :src (car f) :dst (cdr f))
+                      res))))))
 
 (cl-defmacro df-run-local (&body commands)
-  (let ((c (gensym)))
-    `(dolist (,c (list ,@commands))
-       (if (consp ,c)
-           (let ((default-directory (car ,c)))
-             (df-shell-command (cdr ,c)))
-           (df-shell-command ,c)))))
+  "Generate code that runs commands local"
+  `(list ,@(let ((res nil))
+             (dolist (c commands (reverse res))
+               (setq res (cons c res))))))
 
 (cl-defmacro df-run-remote (user host port &body commands)
-  (let ((c (gensym))
-        (ssh-prefix (get-ssh-prefix user host port)))
-    `(dolist (,c (list ,@commands))
-       (if (consp ,c)
-           (let ((default-directory (car ,c)))
-             (df-shell-command (concat ,ssh-prefix (cdr ,c))))
-           (df-shell-command (concat ,ssh-prefix ,c))))))
+  "Generate code that runs commands remote"
+  `(list ,@(let ((res nil)
+                 (ssh-prefix (get-ssh-prefix user host port)))
+             (dolist (c commands (reverse res))
+               (setq res (cons (concat ssh-prefix c) res))))))
+
+;; Main functions
+(cl-defun df-shell-command (command)
+  "Run shell command"
+  (message (format "\nRunning command: %s in dir %s" command default-directory))
+  (call-process-shell-command command nil "*Messages*"))
+
+(cl-defun df-run (commands)
+  "Run given commands"
+  (dolist (c commands)
+    (if (consp c)
+        (let ((default-directory (car c)))
+          (df-shell-command (cdr c)))
+      (df-shell-command c))))
+
+(cl-defun df-profile (name &rest commands)
+  "Add profile"
+  (add-to-list 'df-profiles (cons name (apply #'append commands))))
+
+(defun deploy (profile)
+  "Run deploy process"
+  (interactive (list (completing-read "Deploy profile: " (mapcar #'car df-profiles))))
+  (df-run (assoc profile df-profiles))
+  (message "Deploy finished."))
 
 (provide 'deploy-framework)
 ;;; deploy-framework.el ends here
