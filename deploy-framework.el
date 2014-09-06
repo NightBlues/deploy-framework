@@ -46,34 +46,25 @@
 (cl-defun get-ssh-prefix (user host port)
   (format "ssh %s@%s -p %s " user host port))
 
-(defun get-hash-keys (hashtable)
-  "Return all keys in hashtable."
-  (let (allkeys)
-    (maphash (lambda (kk vv) (setq allkeys (cons kk allkeys))) hashtable)
-    allkeys))
-
 ;; Profile generators
 (cl-defmacro df-copy-files (user host port &body files)
   "Generate code that runs commands local"
   `(list ,@(let ((res nil))
              (dolist (f files (reverse res))
-               (setq res
-                     (cons
-                      (df-rsync-command :user user :host host :port port :src (car f) :dst (cdr f))
-                      res))))))
+               (add-to-list 'res (df-rsync-command :user user :host host :port port :src (car f) :dst (cadr f)))))))
 
 (cl-defmacro df-run-local (&body commands)
   "Generate code that runs commands local"
   `(list ,@(let ((res nil))
              (dolist (c commands (reverse res))
-               (setq res (cons c res))))))
+               (add-to-list 'res c)))))
 
 (cl-defmacro df-run-remote (user host port &body commands)
   "Generate code that runs commands remote"
   `(list ,@(let ((res nil)
                  (ssh-prefix (get-ssh-prefix user host port)))
              (dolist (c commands (reverse res))
-               (setq res (cons (concat ssh-prefix c) res))))))
+               (add-to-list 'res (concat ssh-prefix c))))))
 
 ;; Main functions
 (cl-defun df-shell-command (command)
