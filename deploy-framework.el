@@ -4,23 +4,26 @@
 
 ;; Author: Vadim Radovel <vradovel@croc.ru>
 ;; URL: https://github.com/NightBlues/deploy-framework
-;; Version: 0.0.1
+;; Version: 0.0.2
 
 ;;; Commentary:
 ;; Provides easy to write rules for building and deploying your project.
 ;; Example:
-;; (defun df-deploy-my ()
-;;   (interactive)
-;;   (df-run-local
+;; Declare profile in your .emacs or init.el:
+;;
+;; (df-profile 
+;;  "my1"
+;;  (df-run-local
 ;;    (df-make-command "~/devel/" :make-args "no-lint"))
-;;   (df-copy-files 
-;;    "root" "test.com" "37017"
-;;    (cons "~/devel/" "/root/"))
-;;   (df-run-remote
-;;    "root" "test.com" "37017"
-;;    "killall devel.sh"
-;;    "screen -d -m python /root/devel/devel.sh")
-;;   (message "Deploy finished."))
+;;  (df-copy-files 
+;;    "root" "test.com" "22"
+;;    ("~/devel/ "/root/devel"))
+;;  (df-run-remote
+;;    "root" "test.com" "22"
+;;    "fuser -n tcp 8000 -k"
+;;    "service httpd restart"))
+;; 
+;; Then M-x deploy and type my1 RET
 
 ;;; Code:
 (eval-when-compile (require 'cl))
