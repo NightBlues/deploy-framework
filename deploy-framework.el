@@ -28,7 +28,8 @@
 ;;; Code:
 (eval-when-compile (require 'cl))
 
-(defvar df-profiles '())
+(defvar df-profiles '() "Collection of all available profiles.")
+(defconst df-log-buffer "*deployment*" "Name of the buffer that uses for store commands output.")
 
 ;; Helpers
 (cl-defun df-scp-command (&key user host port src dst)
@@ -45,6 +46,12 @@
 
 (cl-defun get-ssh-prefix (user host port)
   (format "ssh %s@%s -p %s " user host port))
+
+(defmacro df-message (msg)
+  `(progn
+     (message ,msg)
+     (with-current-buffer (get-buffer-create df-log-buffer)
+       (insert (concat "\n" ,msg "\n")))))
 
 ;; Profile generators
 (cl-defmacro df-copy-files (user host port &body files)
@@ -69,16 +76,20 @@
 ;; Main functions
 (cl-defun df-shell-command (command)
   "Run shell command"
-  (message (format "\nRunning command: %s in dir %s" command default-directory))
-  (call-process-shell-command command nil "*Messages*"))
+  (df-message (format "Running command: %s in dir %s" command default-directory))
+  (unless (= 0 (call-process-shell-command command nil
+                                           (get-buffer-create df-log-buffer)))
+    (throw 'command-failed nil)))
 
 (cl-defun df-run (commands)
   "Run given commands"
-  (dolist (c commands)
-    (if (consp c)
-        (let ((default-directory (car c)))
-          (df-shell-command (cdr c)))
-      (df-shell-command c))))
+  (catch 'command-failed
+    (dolist (c commands)
+      (if (consp c)
+          (let ((default-directory (car c)))
+            (df-shell-command (cdr c)))
+        (df-shell-command c)))
+    t))
 
 (cl-defun df-profile (name &rest commands)
   "Add profile"
@@ -87,8 +98,12 @@
 (defun deploy (profile)
   "Run deploy process"
   (interactive (list (completing-read "Deploy profile: " (mapcar #'car df-profiles))))
-  (df-run (assoc profile df-profiles))
-  (message "Deploy finished."))
+  (df-message (format "Deploying profile: %s ..." profile))
+  (if (df-run (cdr (assoc profile df-profiles)))
+      (df-message "Deployment successfull.")
+    (progn
+      (df-message "Deployment failed.")
+      (switch-to-buffer df-log-buffer))))
 
 (provide 'deploy-framework)
 ;;; deploy-framework.el ends here
