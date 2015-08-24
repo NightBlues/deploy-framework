@@ -1,0 +1,4 @@
+(:name deploy-framework
+       :type github
+       :pkgname "nightblues/deploy-framework"
+       :description "Emacs lisp framework that helps you deploy your applications onto test stand.")
