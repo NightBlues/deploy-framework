@@ -71,7 +71,7 @@
   `(list ,@(let ((res nil)
                  (ssh-prefix (get-ssh-prefix user host port)))
              (dolist (c commands (reverse res))
-               (add-to-list 'res (concat ssh-prefix c))))))
+               (add-to-list 'res (concat ssh-prefix "\"" c "\""))))))
 
 ;; Main functions
 (cl-defun df-shell-command (command)
@@ -93,13 +93,21 @@
 
 (cl-defun df-profile (name &rest commands)
   "Add profile"
-  (add-to-list 'df-profiles (cons name (apply #'append commands))))
+  (setq df-profiles (lax-plist-put df-profiles name (apply #'append commands))))
+
+(defun plist-keys (plist)
+  (let ((res '())
+      (i 0))
+  (dolist (elt plist res)
+    (when (= (% i 2) 0)
+      (setq res (cons elt res)))
+    (setq i (1+ i)))))
 
 (defun deploy (profile)
   "Run deploy process"
-  (interactive (list (completing-read "Deploy profile: " (mapcar #'car df-profiles))))
+  (interactive (list (completing-read "Deploy profile: " (plist-keys df-profiles))))
   (df-message (format "Deploying profile: %s ..." profile))
-  (if (df-run (cdr (assoc profile df-profiles)))
+  (if (df-run (lax-plist-get df-profiles profile))
       (df-message "Deployment successfull.")
     (progn
       (df-message "Deployment failed.")
